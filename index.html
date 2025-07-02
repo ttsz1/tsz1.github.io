@@ -11,7 +11,10 @@
       max-width: 400px;
       margin: auto;
     }
-    h2 { text-align: center; }
+    h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
     input, button {
       width: 100%;
       margin-top: 1rem;
@@ -26,9 +29,9 @@
   </style>
 </head>
 <body>
-  <h2>Nowe hasło</h2>
+  <h2>Ustaw nowe hasło</h2>
   <form id="reset-form">
-    <input type="password" id="new-password" placeholder="Wpisz nowe hasło" required />
+    <input type="password" id="new-password" placeholder="Nowe hasło" required />
     <button type="submit">Zmień hasło</button>
   </form>
   <p id="message"></p>
@@ -38,32 +41,37 @@
 
     const supabase = createClient(
       'https://iwnnwqbtmpeqhdysoewk.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3bm53cWJ0bXBlcWhkeXNvZXdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNjkyMDUsImV4cCI6MjA2Njk0NTIwNX0.OMS1eH18KfIQJ903a2CMNSRee1B51wdtq-Ce0WirDzw'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdX...Dzw' // Twój anonKey
     );
 
-    // Pobierz aktywną sesję po przekierowaniu z Supabase
-    const { data, error } = await supabase.auth.getSession();
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
 
-    const session = data?.session;
-    const message = document.getElementById('message');
+    const msg = document.getElementById('message');
 
-    if (!session || error) {
-      message.textContent = 'Błąd sesji: użytkownik niezalogowany. Spróbuj kliknąć w link z maila jeszcze raz.';
-      message.style.color = 'red';
+    if (!code) {
+      msg.textContent = 'Brakuje kodu resetu hasła w adresie URL.';
+      msg.style.color = 'red';
+    } else {
+      const exchange = await supabase.auth.exchangeCodeForSession(code);
+      if (exchange.error) {
+        msg.textContent = 'Błąd sesji: ' + exchange.error.message;
+        msg.style.color = 'red';
+      }
     }
 
     document.getElementById('reset-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const password = document.getElementById('new-password').value;
 
-      const { error: updateError } = await supabase.auth.updateUser({ password });
+      const { error } = await supabase.auth.updateUser({ password });
 
-      if (updateError) {
-        message.textContent = 'Błąd przy zmianie hasła: ' + updateError.message;
-        message.style.color = 'red';
+      if (error) {
+        msg.textContent = '❌ Nie udało się zmienić hasła: ' + error.message;
+        msg.style.color = 'red';
       } else {
-        message.textContent = '✅ Hasło zostało pomyślnie zmienione!';
-        message.style.color = 'green';
+        msg.textContent = '✅ Hasło zostało pomyślnie zmienione!';
+        msg.style.color = 'green';
       }
     });
   </script>
