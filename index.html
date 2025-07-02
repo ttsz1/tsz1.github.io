@@ -36,24 +36,29 @@
   </form>
   <p id="message">🔄 Ładowanie sesji...</p>
 
-  <script type="module">
+  <script type="module" defer>
     import { createClient } from 'https://esm.sh/@supabase/supabase-js'
 
     const supabase = createClient(
       'https://iwnnwqbtmpeqhdysoewk.supabase.co',
-      'TWÓJ_anonKey_tutaj' // ← Wklej swój anonKey z panelu Supabase
+      'TWÓJ_anonKey_tutaj' // ← Wklej swój aktualny anonKey
     );
 
     const msg = document.getElementById('message');
 
-    // 🔓 Aktywuj sesję z linku (działa tylko z token=...&type=recovery)
-    const { error: sessionError } = await supabase.auth.getSessionFromUrl();
+    // 🔓 Aktywuj sesję z URL
+    const { data, error } = await supabase.auth.getSessionFromUrl();
+    console.log('Sesja:', data?.session);
+    console.log('Błąd sesji:', error);
 
-    if (sessionError) {
-      msg.textContent = '❌ Błąd aktywacji sesji: ' + sessionError.message;
+    if (error) {
+      msg.textContent = '❌ Błąd aktywacji sesji: ' + error.message;
+      msg.style.color = 'red';
+    } else if (!data?.session) {
+      msg.textContent = '❌ Sesja nie została aktywowana.';
       msg.style.color = 'red';
     } else {
-      msg.textContent = '✅ Sesja została pomyślnie aktywowana. Możesz ustawić nowe hasło.';
+      msg.textContent = '✅ Sesja aktywna. Możesz ustawić nowe hasło.';
       msg.style.color = 'green';
     }
 
@@ -62,8 +67,10 @@
       const password = document.getElementById('new-password').value;
       msg.textContent = '🔄 Zmieniam hasło...';
       msg.style.color = 'gray';
+      console.log('Próba zmiany hasła na:', password);
 
       const { error: updateError } = await supabase.auth.updateUser({ password });
+      console.log('Wynik updateUser:', updateError);
 
       if (updateError) {
         msg.textContent = '❌ Nie udało się zmienić hasła: ' + updateError.message;
