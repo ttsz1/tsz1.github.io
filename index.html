@@ -39,21 +39,27 @@
     document.addEventListener('DOMContentLoaded', async () => {
       const supabase = createClient(
         'https://iwnnwqbtmpeqhdysoewk.supabase.co',
-        'TWÓJ_anonKey_tutaj' // ← Wklej swój aktualny anonKey z panelu Supabase
+        'TWÓJ_anonKey_tutaj' // ← Wklej swój aktualny anonKey
       );
 
       const msg = document.getElementById('message');
       const form = document.getElementById('reset-form');
 
-      msg.textContent = '🔄 Aktywuję sesję z linku...';
+      msg.textContent = '🔄 Aktywuję sesję...';
+
+      const code = new URLSearchParams(location.search).get('code');
+      console.log('Kod z URL:', code);
+
+      if (!code) {
+        msg.textContent = '❌ Brak kodu resetu w adresie URL.';
+        msg.style.color = 'red';
+        return;
+      }
 
       try {
-        const { data, error } = await supabase.auth.getSessionFromUrl();
-        console.log('Sesja:', data?.session);
-        console.log('Błąd sesji:', error);
-
-        if (error || !data?.session) {
-          msg.textContent = '❌ Sesja nieaktywna: ' + (error?.message || 'Brak sesji');
+        const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+        if (sessionError) {
+          msg.textContent = '❌ Błąd sesji: ' + sessionError.message;
           msg.style.color = 'red';
           return;
         }
@@ -66,10 +72,8 @@
           const password = document.getElementById('new-password').value;
           msg.textContent = '🔄 Zmieniam hasło...';
           msg.style.color = 'gray';
-          console.log('Próba zmiany hasła na:', password);
 
           const { error: updateError } = await supabase.auth.updateUser({ password });
-          console.log('Wynik updateUser:', updateError);
 
           if (updateError) {
             msg.textContent = '❌ Błąd: ' + updateError.message;
