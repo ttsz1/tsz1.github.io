@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resetowanie hasła</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      max-width: 400px;
+      margin: auto;
+    }
+    h2 { text-align: center; }
+    input, button {
+      width: 100%;
+      margin-top: 1rem;
+      padding: 0.6rem;
+      font-size: 1rem;
+    }
+    #message {
+      margin-top: 1.5rem;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>Nowe hasło</h2>
+  <form id="reset-form">
+    <input type="password" id="new-password" placeholder="Wpisz nowe hasło" required />
+    <button type="submit">Zmień hasło</button>
+  </form>
+  <p id="message"></p>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js'
+
+    const supabase = createClient(
+      'https://iwnnwqbtmpeqhdysoewk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3bm53cWJ0bXBlcWhkeXNvZXdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNjkyMDUsImV4cCI6MjA2Njk0NTIwNX0.OMS1eH18KfIQJ903a2CMNSRee1B51wdtq-Ce0WirDzw'
+    );
+
+    // Pobierz aktywną sesję po przekierowaniu z Supabase
+    const { data, error } = await supabase.auth.getSession();
+
+    const session = data?.session;
+    const message = document.getElementById('message');
+
+    if (!session || error) {
+      message.textContent = 'Błąd sesji: użytkownik niezalogowany. Spróbuj kliknąć w link z maila jeszcze raz.';
+      message.style.color = 'red';
+    }
+
+    document.getElementById('reset-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = document.getElementById('new-password').value;
+
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+
+      if (updateError) {
+        message.textContent = 'Błąd przy zmianie hasła: ' + updateError.message;
+        message.style.color = 'red';
+      } else {
+        message.textContent = '✅ Hasło zostało pomyślnie zmienione!';
+        message.style.color = 'green';
+      }
+    });
+  </script>
+</body>
+</html>
