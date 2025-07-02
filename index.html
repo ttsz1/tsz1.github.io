@@ -41,12 +41,12 @@
 
     const supabase = createClient(
       'https://iwnnwqbtmpeqhdysoewk.supabase.co',
-      'TWÓJ_anonKey_tutaj' // 🔒 Wklej swój poprawny anonKey
+      'TWÓJ_anonKey_tutaj' // ← Wklej tu swój poprawny anonKey z panelu Supabase
     );
 
     const msg = document.getElementById('message');
 
-    // ✅ Aktywuj sesję z linku resetującego (token + type=recovery)
+    // ✅ Aktywuj sesję z URL (działa z tokenem i type=recovery)
     const { error } = await supabase.auth.getSessionFromUrl();
 
     if (error) {
