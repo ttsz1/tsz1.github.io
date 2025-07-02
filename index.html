@@ -11,10 +11,7 @@
       max-width: 400px;
       margin: auto;
     }
-    h2 {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
+    h2 { text-align: center; margin-bottom: 1rem; }
     input, button {
       width: 100%;
       margin-top: 1rem;
@@ -41,18 +38,24 @@
 
     const supabase = createClient(
       'https://iwnnwqbtmpeqhdysoewk.supabase.co',
-      'TWÓJ_anonKey_tutaj' // ← Wklej tu swój poprawny anonKey z panelu Supabase
+      'TWÓJ_anonKey_tutaj' // ← Wklej swój aktualny anonKey
     );
 
     const msg = document.getElementById('message');
 
-    // ✅ Aktywuj sesję z URL (działa z tokenem i type=recovery)
+    // 🔓 Aktywuj sesję z URL (dla linku z tokenem i type=recovery)
     const { error } = await supabase.auth.getSessionFromUrl();
-
     if (error) {
-      msg.textContent = '❌ Błąd sesji: ' + error.message;
+      msg.textContent = '❌ Błąd aktywacji sesji: ' + error.message;
       msg.style.color = 'red';
     }
+
+    // 🎯 Nasłuchuj zdarzenia PASSWORD_RECOVERY (opcjonalnie)
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log('Wykryto zdarzenie PASSWORD_RECOVERY');
+      }
+    });
 
     document.getElementById('reset-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -61,7 +64,7 @@
       const { error: updateError } = await supabase.auth.updateUser({ password });
 
       if (updateError) {
-        msg.textContent = '❌ Nie udało się zmienić hasła: ' + updateError.message;
+        msg.textContent = '❌ Błąd przy zmianie hasła: ' + updateError.message;
         msg.style.color = 'red';
       } else {
         msg.textContent = '✅ Hasło zostało pomyślnie zmienione!';
