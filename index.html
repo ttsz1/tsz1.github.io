@@ -34,18 +34,18 @@
   <p id="message">🔄 Ładowanie...</p>
 
   <script type="module">
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js'
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
     document.addEventListener('DOMContentLoaded', async () => {
       const supabase = createClient(
         'https://iwnnwqbtmpeqhdysoewk.supabase.co',
-        'TWÓJ_anonKey_tutaj' // ← Wklej swój anonKey
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3bm53cWJ0bXBlcWhkeXNvZXdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNjkyMDUsImV4cCI6MjA2Njk0NTIwNX0.OMS1eH18KfIQJ903a2CMNSRee1B51wdtq-Ce0WirDzw' // ← Wklej swój aktualny anonKey z panelu Supabase
       );
 
       const msg = document.getElementById('message');
       const form = document.getElementById('reset-form');
 
-      msg.textContent = '🔄 Aktywuję sesję...';
+      msg.textContent = '🔄 Aktywuję sesję z linku...';
 
       try {
         const { data, error } = await supabase.auth.getSessionFromUrl();
@@ -75,7 +75,7 @@
             msg.textContent = '❌ Błąd: ' + updateError.message;
             msg.style.color = 'red';
           } else {
-            msg.textContent = '✅ Hasło zostało zmienione!';
+            msg.textContent = '✅ Hasło zostało pomyślnie zmienione!';
             msg.style.color = 'green';
           }
         });
