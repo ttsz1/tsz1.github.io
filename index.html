@@ -11,7 +11,10 @@
       max-width: 400px;
       margin: auto;
     }
-    h2 { text-align: center; margin-bottom: 1rem; }
+    h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
     input, button {
       width: 100%;
       margin-top: 1rem;
@@ -38,27 +41,23 @@
 
     const supabase = createClient(
       'https://iwnnwqbtmpeqhdysoewk.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3bm53cWJ0bXBlcWhkeXNvZXdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNjkyMDUsImV4cCI6MjA2Njk0NTIwNX0.OMS1eH18KfIQJ903a2CMNSRee1B51wdtq-Ce0WirDzw'
+      'TWÓJ_anonKey_tutaj' // 🔒 Wklej swój poprawny anonKey
     );
 
     const msg = document.getElementById('message');
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
 
-    if (!code) {
-      msg.textContent = 'Brak kodu w adresie URL.';
+    // ✅ Aktywuj sesję z linku resetującego (token + type=recovery)
+    const { error } = await supabase.auth.getSessionFromUrl();
+
+    if (error) {
+      msg.textContent = '❌ Błąd sesji: ' + error.message;
       msg.style.color = 'red';
-    } else {
-      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-      if (error) {
-        msg.textContent = 'Błąd sesji: ' + error.message;
-        msg.style.color = 'red';
-      }
     }
 
     document.getElementById('reset-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const password = document.getElementById('new-password').value;
+
       const { error: updateError } = await supabase.auth.updateUser({ password });
 
       if (updateError) {
