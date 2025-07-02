@@ -11,10 +11,7 @@
       max-width: 400px;
       margin: auto;
     }
-    h2 {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
+    h2 { text-align: center; margin-bottom: 1rem; }
     input, button {
       width: 100%;
       margin-top: 1rem;
@@ -34,50 +31,58 @@
     <input type="password" id="new-password" placeholder="Nowe hasło" required />
     <button type="submit">Zmień hasło</button>
   </form>
-  <p id="message">🔄 Ładowanie sesji...</p>
+  <p id="message">🔄 Ładowanie...</p>
 
-  <script type="module" defer>
+  <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js'
 
-    const supabase = createClient(
-      'https://iwnnwqbtmpeqhdysoewk.supabase.co',
-      'TWÓJ_anonKey_tutaj' // ← Wklej swój aktualny anonKey
-    );
+    document.addEventListener('DOMContentLoaded', async () => {
+      const supabase = createClient(
+        'https://iwnnwqbtmpeqhdysoewk.supabase.co',
+        'TWÓJ_anonKey_tutaj' // ← Wklej swój anonKey
+      );
 
-    const msg = document.getElementById('message');
+      const msg = document.getElementById('message');
+      const form = document.getElementById('reset-form');
 
-    // 🔓 Aktywuj sesję z URL
-    const { data, error } = await supabase.auth.getSessionFromUrl();
-    console.log('Sesja:', data?.session);
-    console.log('Błąd sesji:', error);
+      msg.textContent = '🔄 Aktywuję sesję...';
 
-    if (error) {
-      msg.textContent = '❌ Błąd aktywacji sesji: ' + error.message;
-      msg.style.color = 'red';
-    } else if (!data?.session) {
-      msg.textContent = '❌ Sesja nie została aktywowana.';
-      msg.style.color = 'red';
-    } else {
-      msg.textContent = '✅ Sesja aktywna. Możesz ustawić nowe hasło.';
-      msg.style.color = 'green';
-    }
+      try {
+        const { data, error } = await supabase.auth.getSessionFromUrl();
+        console.log('Sesja:', data?.session);
+        console.log('Błąd sesji:', error);
 
-    document.getElementById('reset-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const password = document.getElementById('new-password').value;
-      msg.textContent = '🔄 Zmieniam hasło...';
-      msg.style.color = 'gray';
-      console.log('Próba zmiany hasła na:', password);
+        if (error || !data?.session) {
+          msg.textContent = '❌ Sesja nieaktywna: ' + (error?.message || 'Brak sesji');
+          msg.style.color = 'red';
+          return;
+        }
 
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      console.log('Wynik updateUser:', updateError);
-
-      if (updateError) {
-        msg.textContent = '❌ Nie udało się zmienić hasła: ' + updateError.message;
-        msg.style.color = 'red';
-      } else {
-        msg.textContent = '✅ Hasło zostało pomyślnie zmienione!';
+        msg.textContent = '✅ Sesja aktywna. Możesz ustawić nowe hasło.';
         msg.style.color = 'green';
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const password = document.getElementById('new-password').value;
+          msg.textContent = '🔄 Zmieniam hasło...';
+          msg.style.color = 'gray';
+          console.log('Próba zmiany hasła na:', password);
+
+          const { error: updateError } = await supabase.auth.updateUser({ password });
+          console.log('Wynik updateUser:', updateError);
+
+          if (updateError) {
+            msg.textContent = '❌ Błąd: ' + updateError.message;
+            msg.style.color = 'red';
+          } else {
+            msg.textContent = '✅ Hasło zostało zmienione!';
+            msg.style.color = 'green';
+          }
+        });
+      } catch (err) {
+        msg.textContent = '❌ Błąd krytyczny: ' + err.message;
+        msg.style.color = 'red';
+        console.error('Błąd krytyczny:', err);
       }
     });
   </script>
