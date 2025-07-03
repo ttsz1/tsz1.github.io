@@ -3,17 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Resetowanie hasła</title>
+  <title>Reset hasła</title>
   <style>
     body {
       font-family: sans-serif;
       padding: 2rem;
       max-width: 400px;
       margin: auto;
-    }
-    h2 {
       text-align: center;
-      margin-bottom: 1rem;
     }
     input, button {
       width: 100%;
@@ -22,9 +19,8 @@
       font-size: 1rem;
     }
     #message {
-      margin-top: 1.5rem;
+      margin-top: 2rem;
       font-weight: bold;
-      text-align: center;
     }
   </style>
 </head>
@@ -48,43 +44,58 @@
       const msg = document.getElementById('message');
       const form = document.getElementById('reset-form');
 
-      const token = new URLSearchParams(location.search).get('token');
-      const type = new URLSearchParams(location.search).get('type');
+      const urlParams = new URLSearchParams(location.search);
+      const token = urlParams.get('token');
+      const type = urlParams.get('type');
+      const code = urlParams.get('code');
 
-      if (token && type === 'recovery') {
-        try {
+      let sessionError = null;
+
+      try {
+        if (token && type === 'recovery') {
           const { error } = await supabase.auth.getSessionFromUrl();
-          if (error) {
-            msg.textContent = '❌ Błąd sesji: ' + error.message;
-            msg.style.color = 'red';
-            return;
-          }
-          msg.textContent = '✅ Sesja aktywna. Wprowadź nowe hasło.';
-          msg.style.color = 'green';
-        } catch (err) {
-          msg.textContent = '❌ Błąd krytyczny: ' + err.message;
-          msg.style.color = 'red';
-        }
-      } else {
-        msg.textContent = '❌ Brak tokenu lub niepoprawny typ w URL.';
-        msg.style.color = 'red';
-      }
-
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const password = document.getElementById('new-password').value;
-        msg.textContent = '🔄 Zmieniam hasło...';
-        msg.style.color = 'gray';
-
-        const { error } = await supabase.auth.updateUser({ password });
-        if (error) {
-          msg.textContent = '❌ Błąd: ' + error.message;
-          msg.style.color = 'red';
+          sessionError = error;
+        } else if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          sessionError = error;
         } else {
-          msg.textContent = '✅ Hasło zostało zmienione!';
-          msg.style.color = 'green';
+          msg.textContent = '❌ Brak tokenu lub niepoprawny typ w URL.';
+          msg.style.color = 'red';
+          return;
         }
-      });
+
+        if (sessionError) {
+          msg.textContent = '❌ Błąd sesji: ' + sessionError.message;
+          msg.style.color = 'red';
+          return;
+        }
+
+        msg.textContent = '✅ Sesja aktywna. Wpisz nowe hasło.';
+        msg.style.color = 'green';
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const password = document.getElementById('new-password').value;
+          msg.textContent = '🔄 Zmieniam hasło...';
+          msg.style.color = 'gray';
+
+          const { error: updateError } = await supabase.auth.updateUser({ password });
+          if (updateError) {
+            msg.textContent = '❌ Błąd: ' + updateError.message;
+            msg.style.color = 'red';
+          } else {
+            msg.textContent = '✅ Hasło zostało zmienione! Przekierowuję...';
+            msg.style.color = 'green';
+            setTimeout(() => {
+              window.location.href = 'https://twoja-aplikacja.flutter.dev'; // ← Podmień na swój adres
+            }, 3000);
+          }
+        });
+      } catch (err) {
+        msg.textContent = '❌ Błąd krytyczny: ' + err.message;
+        msg.style.color = 'red';
+        console.error('Błąd krytyczny:', err);
+      }
     });
   </script>
 </body>
