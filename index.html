@@ -11,7 +11,10 @@
       max-width: 400px;
       margin: auto;
     }
-    h2 { text-align: center; margin-bottom: 1rem; }
+    h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
     input, button {
       width: 100%;
       margin-top: 1rem;
@@ -39,55 +42,49 @@
     document.addEventListener('DOMContentLoaded', async () => {
       const supabase = createClient(
         'https://iwnnwqbtmpeqhdysoewk.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3bm53cWJ0bXBlcWhkeXNvZXdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNjkyMDUsImV4cCI6MjA2Njk0NTIwNX0.OMS1eH18KfIQJ903a2CMNSRee1B51wdtq-Ce0WirDzw' // ← Wklej swój aktualny anonKey
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3bm53cWJ0bXBlcWhkeXNvZXdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNjkyMDUsImV4cCI6MjA2Njk0NTIwNX0.OMS1eH18KfIQJ903a2CMNSRee1B51wdtq-Ce0WirDzw' // ← Wklej swój anonKey z panelu Supabase → Project Settings → API
       );
 
       const msg = document.getElementById('message');
       const form = document.getElementById('reset-form');
 
-      msg.textContent = '🔄 Aktywuję sesję...';
+      const token = new URLSearchParams(location.search).get('token');
+      const type = new URLSearchParams(location.search).get('type');
 
-      const code = new URLSearchParams(location.search).get('code');
-      console.log('Kod z URL:', code);
-
-      if (!code) {
-        msg.textContent = '❌ Brak kodu resetu w adresie URL.';
-        msg.style.color = 'red';
-        return;
-      }
-
-      try {
-        const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
-        if (sessionError) {
-          msg.textContent = '❌ Błąd sesji: ' + sessionError.message;
-          msg.style.color = 'red';
-          return;
-        }
-
-        msg.textContent = '✅ Sesja aktywna. Możesz ustawić nowe hasło.';
-        msg.style.color = 'green';
-
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const password = document.getElementById('new-password').value;
-          msg.textContent = '🔄 Zmieniam hasło...';
-          msg.style.color = 'gray';
-
-          const { error: updateError } = await supabase.auth.updateUser({ password });
-
-          if (updateError) {
-            msg.textContent = '❌ Błąd: ' + updateError.message;
+      if (token && type === 'recovery') {
+        try {
+          const { error } = await supabase.auth.getSessionFromUrl();
+          if (error) {
+            msg.textContent = '❌ Błąd sesji: ' + error.message;
             msg.style.color = 'red';
-          } else {
-            msg.textContent = '✅ Hasło zostało pomyślnie zmienione!';
-            msg.style.color = 'green';
+            return;
           }
-        });
-      } catch (err) {
-        msg.textContent = '❌ Błąd krytyczny: ' + err.message;
+          msg.textContent = '✅ Sesja aktywna. Wprowadź nowe hasło.';
+          msg.style.color = 'green';
+        } catch (err) {
+          msg.textContent = '❌ Błąd krytyczny: ' + err.message;
+          msg.style.color = 'red';
+        }
+      } else {
+        msg.textContent = '❌ Brak tokenu lub niepoprawny typ w URL.';
         msg.style.color = 'red';
-        console.error('Błąd krytyczny:', err);
       }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const password = document.getElementById('new-password').value;
+        msg.textContent = '🔄 Zmieniam hasło...';
+        msg.style.color = 'gray';
+
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) {
+          msg.textContent = '❌ Błąd: ' + error.message;
+          msg.style.color = 'red';
+        } else {
+          msg.textContent = '✅ Hasło zostało zmienione!';
+          msg.style.color = 'green';
+        }
+      });
     });
   </script>
 </body>
